@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muzički Kviz</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f1a;
+      color: white;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+    
+    .connection-info {
+      background: #1a1a2e;
+      padding: 10px 18px;
+      border-radius: 8px;
+      display: inline-block;
+      margin-top: 8px;
+    }
+    
+    .connection-info code {
+      color: #4cc9f0;
+      font-size: 0.95rem;
+    }
+    
+    .main-layout {
+      display: grid;
+      grid-template-columns: 250px 1fr 300px;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .panel {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 18px;
+    }
+    
+    .panel h2 {
+      font-size: 1rem;
+      margin-bottom: 15px;
+      color: #4cc9f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .team-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 450px;
+      overflow-y: auto;
+    }
+    
+    .team-item {
+      background: #1a1a2e;
+      padding: 10px 12px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+    
+    .team-item .kick-btn {
+      background: #c1121f;
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.7rem;
+      opacity: 0.7;
+    }
+    
+    .team-item .kick-btn:hover {
+      opacity: 1;
+    }
+    
+    .no-teams {
+      color: #666;
+      text-align: center;
+      padding: 25px;
+      font-size: 0.9rem;
+    }
+    
+    .badge {
+      background: #4361ee;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      margin-left: auto;
+    }
+    
+    .bracket-container {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 15px 0;
+      overflow-x: auto;
+      gap: 10px;
+    }
+    
+    .round {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      min-width: 150px;
+    }
+    
+    .round-title {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #888;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .match-card {
+      background: #1a1a2e;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .match-card:hover {
+      background: #252550;
+    }
+    
+    .match-card.active {
+      border-color: #4cc9f0;
+      background: #252560;
+    }
+    
+    .match-card.completed {
+      opacity: 0.5;
+    }
+    
+    .match-card.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    
+    .match-team {
+      padding: 6px 8px;
+      background: #252550;
+      border-radius: 4px;
+      margin: 3px 0;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    
+    .match-team.winner {
+      background: #2d6a4f;
+    }
+    
+    .match-team.empty {
+      color: #555;
+      font-style: italic;
+    }
+    
+    .match-vs {
+      text-align: center;
+      color: #555;
+      font-size: 0.65rem;
+      padding: 1px 0;
+    }
+    
+    .match-score {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #4cc9f0;
+      margin-top: 5px;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .btn-start { background: linear-gradient(145deg, #2d6a4f, #1b4332); color: white; }
+    .btn-primary { background: #4361ee; color: white; }
+    .btn-danger { background: #c1121f; color: white; }
+    .btn-secondary { background: #333; color: #aaa; }
+    .btn-correct { background: linear-gradient(145deg, #2d6a4f, #1b4332); color: white; }
+    .btn-wrong { background: linear-gradient(145deg, #c1121f, #8b0000); color: white; }
+    
+    /* Proper Pie Wheel */
+    .wheel-container {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 15px auto;
+    }
+    
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: relative;
+      transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(67, 97, 238, 0.3);
+    }
+    
+    .wheel-segment {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 38.27%, 79.39% 90.45%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .wheel-segment span {
+      position: absolute;
+      top: 22%;
+      left: 50%;
+      transform: translateX(-50%) rotate(36deg);
+      font-size: 0.65rem;
+      font-weight: bold;
+      text-align: center;
+      width: 50px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    
+    .wheel-pointer {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-top: 20px solid #fff;
+      z-index: 10;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+    }
+    
+    .wheel-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 30px;
+      height: 30px;
+      background: #1a1a2e;
+      border-radius: 50%;
+      border: 3px solid #4361ee;
+      z-index: 5;
+    }
+    
+    .selected-genre {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #4cc9f0;
+      margin: 12px 0;
+      min-height: 35px;
+    }
+    
+    .current-match {
+      background: #1a1a2e;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 15px;
+    }
+    
+    .current-match-teams {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 1rem;
+      margin: 8px 0;
+    }
+    
+    .current-match-teams .team {
+      padding: 6px 12px;
+      background: #252550;
+      border-radius: 6px;
+    }
+    
+    .current-match-teams .team.answering {
+      background: #4361ee;
+      animation: pulse 0.5s infinite;
+    }
+    
+    .current-match-teams .vs {
+      color: #666;
+    }
+    
+    .phase-indicator {
+      text-align: center;
+      padding: 8px;
+      background: #252550;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+    }
+    
+    .phase-indicator.wheel { background: #4361ee33; color: #4cc9f0; }
+    .phase-indicator.buzzer { background: #c1121f33; color: #ff6b6b; }
+    .phase-indicator.answering { background: #2d6a4f33; color: #4cc9f0; }
+    
+    .answering-info {
+      text-align: center;
+      padding: 12px;
+      background: #252550;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+    
+    .answering-info .team-name {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #4cc9f0;
+    }
+    
+    .answering-info .time {
+      color: #888;
+      font-size: 0.85rem;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    @media (max-width: 1100px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎵 Muzički Kviz</h1>
+    <div class="connection-info">
+      Igrači: <code id="connectUrl">Učitavanje...</code>
+    </div>
+  </div>
+  
+  <div class="main-layout">
+    <!-- Teams Panel -->
+    <div class="panel">
+      <h2>👥 Timovi <span class="badge" id="teamCount">0/8</span></h2>
+      <div class="team-list" id="teamList">
+        <div class="no-teams">Čekanje timova...</div>
+      </div>
+      <div style="margin-top: 12px;">
+        <button class="btn btn-start" id="startTournamentBtn" onclick="startTournament()" disabled>
+          🏆 Pokreni Turnir
+        </button>
+        <button class="btn btn-secondary" onclick="resetTournament()">
+          🔄 Resetuj
+        </button>
+      </div>
+    </div>
+    
+    <!-- Bracket Panel -->
+    <div class="panel">
+      <h2>🏆 Kostur</h2>
+      <div class="bracket-container" id="bracketContainer">
+        <div class="round" id="quarterfinalsRound">
+          <div class="round-title">Četvrtfinale</div>
+        </div>
+        <div class="round" id="semifinalsRound">
+          <div class="round-title">Polufinale</div>
+        </div>
+        <div class="round" id="finalRound">
+          <div class="round-title">Finale</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Controls Panel -->
+    <div class="panel">
+      <h2>🎮 Kontrole</h2>
+      
+      <div id="noMatchSelected">
+        <p style="color: #666; text-align: center; padding: 15px; font-size: 0.9rem;">
+          Klikni na meč u bracketu
+        </p>
+      </div>
+      
+      <div id="matchControls" style="display: none;">
+        <div class="current-match">
+          <div class="current-match-teams" id="currentMatchTeams"></div>
+          <div class="match-score" id="currentMatchScore" style="display: none;"></div>
+        </div>
+        
+        <div class="phase-indicator" id="phaseIndicator">-</div>
+        
+        <!-- Wheel Section -->
+        <div id="wheelSection">
+          <div class="wheel-container">
+            <div class="wheel-pointer"></div>
+            <svg class="wheel" id="wheel" viewBox="0 0 200 200"></svg>
+            <div class="wheel-center"></div>
+          </div>
+          <div class="selected-genre" id="selectedGenre"></div>
+          <button class="btn btn-primary" id="spinBtn" onclick="spinWheel()">
+            🎰 Zavrti Točak
+          </button>
+        </div>
+        
+        <!-- Start Round Section -->
+        <div id="startRoundSection" style="display: none;">
+          <button class="btn btn-danger" id="startRoundBtn" onclick="startRound()">
+            ▶️ Pokreni Rundu
+          </button>
+        </div>
+        
+        <!-- Waiting for buzz -->
+        <div id="waitingBuzzSection" style="display: none;">
+          <div class="answering-info">
+            <div style="color: #ff6b6b;">⏳ Čekanje na pritisak...</div>
+          </div>
+        </div>
+        
+        <!-- Answering Section -->
+        <div id="answeringSection" style="display: none;">
+          <div class="answering-info">
+            <div>Odgovara:</div>
+            <div class="team-name" id="answeringTeamName">-</div>
+            <div class="time" id="answeringTime">-</div>
+          </div>
+          <button class="btn btn-correct" onclick="correctAnswer()">
+            ✓ Tačno
+          </button>
+          <button class="btn btn-wrong" onclick="wrongAnswer()">
+            ✗ Netačno
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const GENRES = ['Ex-Yu', 'Rep', 'Narodna', 'Pop', 'Turbo Folk'];
+    const GENRE_COLORS = ['#e63946', '#4361ee', '#2d6a4f', '#f77f00', '#9d4edd'];
+    
+    let ws;
+    let teams = [];
+    let tournament = null;
+    let wheelRotation = 0;
+    
+    function connect() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+      
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: 'admin-join' }));
+        document.getElementById('connectUrl').textContent = 
+          `${window.location.protocol}//${window.location.host}/`;
+      };
+      
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleMessage(data);
+      };
+      
+      ws.onclose = () => setTimeout(connect, 2000);
+    }
+    
+    function handleMessage(data) {
+      switch (data.type) {
+        case 'teams':
+          teams = data.teams;
+          renderTeams();
+          break;
+          
+        case 'tournament-state':
+          tournament = data.tournament;
+          renderBracket();
+          updateControls();
+          break;
+          
+        case 'wheel-result':
+          document.getElementById('selectedGenre').textContent = data.genre;
+          document.getElementById('startRoundSection').style.display = 'block';
+          break;
+          
+        case 'round-started':
+          hideAllSections();
+          document.getElementById('waitingBuzzSection').style.display = 'block';
+          updatePhaseIndicator('buzzer');
+          break;
+          
+        case 'buzzed':
+          hideAllSections();
+          document.getElementById('answeringSection').style.display = 'block';
+          document.getElementById('answeringTeamName').textContent = data.team;
+          document.getElementById('answeringTime').textContent = `${data.time}ms`;
+          updatePhaseIndicator('answering');
+          highlightAnswering(data.team);
+          break;
+          
+        case 'wrong-other-answers':
+          document.getElementById('answeringTeamName').textContent = data.team;
+          document.getElementById('answeringTime').textContent = 'Drugi igrač';
+          highlightAnswering(data.team);
+          break;
+          
+        case 'both-wrong':
+          hideAllSections();
+          document.getElementById('wheelSection').style.display = 'block';
+          document.getElementById('selectedGenre').textContent = '';
+          updatePhaseIndicator('wheel');
+          break;
+          
+        case 'match-winner':
+        case 'final-point':
+          // Will be updated via tournament-state
+          break;
+      }
+    }
+    
+    function hideAllSections() {
+      document.getElementById('wheelSection').style.display = 'none';
+      document.getElementById('startRoundSection').style.display = 'none';
+      document.getElementById('waitingBuzzSection').style.display = 'none';
+      document.getElementById('answeringSection').style.display = 'none';
+    }
+    
+    function highlightAnswering(teamName) {
+      document.querySelectorAll('.current-match-teams .team').forEach(el => {
+        el.classList.remove('answering');
+        if (el.textContent === teamName) {
+          el.classList.add('answering');
+        }
+      });
+    }
+    
+    function renderTeams() {
+      const list = document.getElementById('teamList');
+      document.getElementById('teamCount').textContent = `${teams.length}/8`;
+      
+      const btn = document.getElementById('startTournamentBtn');
+      btn.disabled = teams.length !== 8 || (tournament && tournament.started);
+      
+      if (teams.length === 0) {
+        list.innerHTML = '<div class="no-teams">Čekanje timova...</div>';
+        return;
+      }
+      
+      list.innerHTML = teams.map(name => `
+        <div class="team-item">
+          <span>${name}</span>
+          <button class="kick-btn" onclick="kickTeam('${name}')">Izbaci</button>
+        </div>
+      `).join('');
+    }
+    
+    function renderBracket() {
+      if (!tournament || !tournament.started) {
+        document.getElementById('quarterfinalsRound').innerHTML = '<div class="round-title">Četvrtfinale</div>' + 
+          [0,1,2,3].map(() => `
+            <div class="match-card disabled">
+              <div class="match-team empty">-</div>
+              <div class="match-vs">vs</div>
+              <div class="match-team empty">-</div>
+            </div>
+          `).join('');
+        document.getElementById('semifinalsRound').innerHTML = '<div class="round-title">Polufinale</div>' +
+          [0,1].map(() => `
+            <div class="match-card disabled">
+              <div class="match-team empty">-</div>
+              <div class="match-vs">vs</div>
+              <div class="match-team empty">-</div>
+            </div>
+          `).join('');
+        document.getElementById('finalRound').innerHTML = '<div class="round-title">Finale</div>' +
+          `<div class="match-card disabled">
+            <div class="match-team empty">-</div>
+            <div class="match-vs">vs</div>
+            <div class="match-team empty">-</div>
+          </div>`;
+        return;
+      }
+      
+      document.getElementById('quarterfinalsRound').innerHTML = '<div class="round-title">Četvrtfinale</div>' +
+        tournament.bracket.quarterfinals.map((match, i) => renderMatchCard(match, 'quarterfinals', i)).join('');
+      
+      document.getElementById('semifinalsRound').innerHTML = '<div class="round-title">Polufinale</div>' +
+        tournament.bracket.semifinals.map((match, i) => renderMatchCard(match, 'semifinals', i)).join('');
+      
+      document.getElementById('finalRound').innerHTML = '<div class="round-title">Finale (Best of 3)</div>' +
+        renderMatchCard(tournament.bracket.final, 'final', 0, true);
+    }
+    
+    function renderMatchCard(match, round, index, isFinal = false) {
+      const isActive = tournament.currentMatch && 
+                       tournament.currentMatch.round === round && 
+                       tournament.currentMatch.index === index;
+      const isCompleted = match.winner !== null;
+      const canSelect = match.team1 && match.team2 && !isCompleted && !tournament.currentMatch;
+      
+      let classes = 'match-card';
+      if (isActive) classes += ' active';
+      if (isCompleted) classes += ' completed';
+      if (!canSelect && !isActive) classes += ' disabled';
+      
+      const onClick = canSelect ? `onclick="selectMatch('${round}', ${index})"` : '';
+      
+      let scoreHtml = '';
+      if (isFinal && (match.score1 > 0 || match.score2 > 0 || match.active)) {
+        scoreHtml = `<div class="match-score">${match.score1} : ${match.score2}</div>`;
+      }
+      
+      return `
+        <div class="${classes}" ${onClick}>
+          <div class="match-team ${match.winner === match.team1 ? 'winner' : ''} ${!match.team1 ? 'empty' : ''}">
+            ${match.team1 || '-'}
+          </div>
+          <div class="match-vs">vs</div>
+          <div class="match-team ${match.winner === match.team2 ? 'winner' : ''} ${!match.team2 ? 'empty' : ''}">
+            ${match.team2 || '-'}
+          </div>
+          ${scoreHtml}
+        </div>
+      `;
+    }
+    
+    function updateControls() {
+      const hasMatch = tournament && tournament.currentMatch;
+      document.getElementById('noMatchSelected').style.display = hasMatch ? 'none' : 'block';
+      document.getElementById('matchControls').style.display = hasMatch ? 'block' : 'none';
+      
+      if (!hasMatch) {
+        hideAllSections();
+        return;
+      }
+      
+      const match = getCurrentMatch();
+      if (!match) return;
+      
+      document.getElementById('currentMatchTeams').innerHTML = `
+        <span class="team">${match.team1}</span>
+        <span class="vs">VS</span>
+        <span class="team">${match.team2}</span>
+      `;
+      
+      const scoreEl = document.getElementById('currentMatchScore');
+      if (tournament.currentMatch.round === 'final') {
+        scoreEl.style.display = 'block';
+        scoreEl.textContent = `${match.score1} : ${match.score2}`;
+      } else {
+        scoreEl.style.display = 'none';
+      }
+      
+      if (tournament.phase === 'wheel') {
+        hideAllSections();
+        document.getElementById('wheelSection').style.display = 'block';
+        updatePhaseIndicator('wheel');
+      }
+    }
+    
+    function updatePhaseIndicator(phase) {
+      const el = document.getElementById('phaseIndicator');
+      el.className = 'phase-indicator ' + phase;
+      
+      switch (phase) {
+        case 'wheel': el.textContent = '🎰 Zavrti točak'; break;
+        case 'buzzer': el.textContent = '⏳ Čekanje na pritisak...'; break;
+        case 'answering': el.textContent = '🎤 Odgovaranje...'; break;
+        default: el.textContent = '-';
+      }
+    }
+    
+    function getCurrentMatch() {
+      if (!tournament || !tournament.currentMatch) return null;
+      const { round, index } = tournament.currentMatch;
+      if (round === 'final') return tournament.bracket.final;
+      return tournament.bracket[round][index];
+    }
+    
+    function initWheel() {
+      const svg = document.getElementById('wheel');
+      const cx = 100, cy = 100, r = 100;
+      const n = GENRES.length;
+      const anglePerSlice = 360 / n;
+      
+      let html = '';
+      
+      for (let i = 0; i < n; i++) {
+        const startAngle = (i * anglePerSlice - 90) * Math.PI / 180;
+        const endAngle = ((i + 1) * anglePerSlice - 90) * Math.PI / 180;
+        
+        const x1 = cx + r * Math.cos(startAngle);
+        const y1 = cy + r * Math.sin(startAngle);
+        const x2 = cx + r * Math.cos(endAngle);
+        const y2 = cy + r * Math.sin(endAngle);
+        
+        const largeArc = anglePerSlice > 180 ? 1 : 0;
+        
+        const pathD = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+        
+        // Text position (middle of slice)
+        const midAngle = ((i + 0.5) * anglePerSlice - 90) * Math.PI / 180;
+        const textR = r * 0.65;
+        const tx = cx + textR * Math.cos(midAngle);
+        const ty = cy + textR * Math.sin(midAngle);
+        const textRotation = (i + 0.5) * anglePerSlice;
+        
+        html += `
+          <path d="${pathD}" fill="${GENRE_COLORS[i]}" stroke="#1a1a2e" stroke-width="2"/>
+          <text x="${tx}" y="${ty}" fill="white" font-size="11" font-weight="bold" 
+                text-anchor="middle" dominant-baseline="middle"
+                transform="rotate(${textRotation}, ${tx}, ${ty})"
+                style="text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
+            ${GENRES[i]}
+          </text>
+        `;
+      }
+      
+      svg.innerHTML = html;
+    }
+    
+    function spinWheel() {
+      const svg = document.getElementById('wheel');
+      document.getElementById('spinBtn').disabled = true;
+      document.getElementById('selectedGenre').textContent = '';
+      document.getElementById('startRoundSection').style.display = 'none';
+      
+      const randomIndex = Math.floor(Math.random() * GENRES.length);
+      const anglePerSlice = 360 / GENRES.length;
+      
+      // Target: center of the winning slice at the top (0 degrees)
+      const targetAngle = 360 - (randomIndex * anglePerSlice + anglePerSlice / 2);
+      wheelRotation += 360 * 5 + targetAngle - (wheelRotation % 360);
+      
+      svg.style.transform = `rotate(${wheelRotation}deg)`;
+      
+      setTimeout(() => {
+        ws.send(JSON.stringify({ type: 'spin-wheel' }));
+        document.getElementById('spinBtn').disabled = false;
+      }, 4000);
+    }
+    
+    function selectMatch(round, index) {
+      ws.send(JSON.stringify({ type: 'select-match', round, index }));
+    }
+    
+    function startRound() {
+      ws.send(JSON.stringify({ type: 'start-round' }));
+    }
+    
+    function correctAnswer() {
+      ws.send(JSON.stringify({ type: 'correct-answer' }));
+    }
+    
+    function wrongAnswer() {
+      ws.send(JSON.stringify({ type: 'wrong-answer' }));
+    }
+    
+    function startTournament() {
+      if (teams.length !== 8) {
+        alert('Potrebno je 8 timova!');
+        return;
+      }
+      ws.send(JSON.stringify({ type: 'start-tournament' }));
+    }
+    
+    function resetTournament() {
+      if (confirm('Resetovati turnir?')) {
+        ws.send(JSON.stringify({ type: 'reset-tournament' }));
+      }
+    }
+    
+    function kickTeam(name) {
+      if (confirm(`Izbaciti "${name}"?`)) {
+        ws.send(JSON.stringify({ type: 'kick-team', name }));
+      }
+    }
+    
+    initWheel();
+    connect();
+  </script>
+</body>
+</html>

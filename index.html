@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Muzički Kviz</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: white;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+    }
+    
+    .screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 20px;
+    }
+    
+    .screen.active {
+      display: flex;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 30px;
+      color: #eee;
+    }
+    
+    .join-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 350px;
+    }
+    
+    input {
+      padding: 18px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 12px;
+      background: #16213e;
+      color: white;
+      text-align: center;
+    }
+    
+    input::placeholder {
+      color: #666;
+    }
+    
+    .btn {
+      padding: 18px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .btn-primary {
+      background: #4361ee;
+      color: white;
+    }
+    
+    .error {
+      color: #ff6b6b;
+      margin-top: 10px;
+      text-align: center;
+    }
+    
+    .team-name-display {
+      font-size: 1.8rem;
+      color: #4cc9f0;
+      margin-bottom: 20px;
+    }
+    
+    .status {
+      font-size: 1.3rem;
+      color: #aaa;
+      text-align: center;
+      line-height: 1.6;
+    }
+    
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    /* Big button screen */
+    .button-screen {
+      background: linear-gradient(145deg, #c1121f, #780000);
+    }
+    
+    .big-button {
+      width: 85vw;
+      height: 85vw;
+      max-width: 400px;
+      max-height: 400px;
+      border-radius: 50%;
+      border: none;
+      background: radial-gradient(circle at 30% 30%, #ff4d4d, #8b0000);
+      box-shadow: 
+        0 10px 30px rgba(0,0,0,0.5),
+        inset 0 -10px 30px rgba(0,0,0,0.3),
+        inset 0 10px 30px rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    
+    .big-button:active {
+      transform: scale(0.95);
+      box-shadow: 
+        0 5px 15px rgba(0,0,0,0.5),
+        inset 0 -5px 15px rgba(0,0,0,0.3),
+        inset 0 5px 15px rgba(255,255,255,0.1);
+    }
+    
+    /* Result screens */
+    .result-screen {
+      text-align: center;
+    }
+    
+    .result-screen.green {
+      background: linear-gradient(145deg, #1b4332, #081c15);
+    }
+    
+    .result-screen.red {
+      background: linear-gradient(145deg, #6c1a1a, #2d0a0a);
+    }
+    
+    .result-screen.blue {
+      background: linear-gradient(145deg, #1e3a5f, #0d1b2a);
+    }
+    
+    .result-screen.gold {
+      background: linear-gradient(145deg, #8b6914, #3d2e06);
+    }
+    
+    .big-icon {
+      font-size: 6rem;
+      margin-bottom: 20px;
+    }
+    
+    .result-title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    
+    .result-sub {
+      font-size: 1.3rem;
+      color: #aaa;
+    }
+    
+    .score-display {
+      font-size: 4rem;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #4cc9f0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Join Screen -->
+  <div class="screen active" id="joinScreen">
+    <h1>🎵 Muzički Kviz</h1>
+    <div class="join-form">
+      <input type="text" id="teamName" placeholder="Unesi ime tima" autocomplete="off" maxlength="20">
+      <button class="btn btn-primary" onclick="joinGame()">Pridruži se</button>
+      <div class="error" id="error"></div>
+    </div>
+  </div>
+  
+  <!-- Waiting Screen -->
+  <div class="screen" id="waitingScreen">
+    <h1>🎵 Muzički Kviz</h1>
+    <div class="team-name-display" id="teamDisplay"></div>
+    <div class="status pulse" id="waitingStatus">Čekanje da turnir počne...</div>
+  </div>
+  
+  <!-- Big Button Screen -->
+  <div class="screen button-screen" id="buttonScreen">
+    <button class="big-button" id="bigButton" onclick="pressButton()"></button>
+  </div>
+  
+  <!-- You're Answering Screen -->
+  <div class="screen result-screen blue" id="answeringScreen">
+    <div class="big-icon">🎤</div>
+    <div class="result-title">Ti odgovaraš!</div>
+    <div class="result-sub">Čekanje na rezultat...</div>
+  </div>
+  
+  <!-- Opponent Answering Screen -->
+  <div class="screen result-screen blue" id="opponentAnsweringScreen">
+    <div class="big-icon">⏳</div>
+    <div class="result-title" id="opponentName">Protivnik odgovara</div>
+    <div class="result-sub">Sačekaj...</div>
+  </div>
+  
+  <!-- Your Turn to Answer Screen -->
+  <div class="screen result-screen green" id="yourTurnScreen">
+    <div class="big-icon">🎯</div>
+    <div class="result-title">Tvoj red!</div>
+    <div class="result-sub">Odgovori na pitanje</div>
+  </div>
+  
+  <!-- You Got It Wrong Screen -->
+  <div class="screen result-screen red" id="wrongWaitScreen">
+    <div class="big-icon">❌</div>
+    <div class="result-title">Netačno!</div>
+    <div class="result-sub">Protivnik odgovara...</div>
+  </div>
+  
+  <!-- Both Wrong - New Song Screen -->
+  <div class="screen result-screen blue" id="bothWrongScreen">
+    <div class="big-icon">🔄</div>
+    <div class="result-title">Nova pesma!</div>
+    <div class="result-sub">Oba tima pogrešila, sledeća pesma...</div>
+  </div>
+  
+  <!-- You Won Match Screen -->
+  <div class="screen result-screen green" id="wonMatchScreen">
+    <div class="big-icon">🎉</div>
+    <div class="result-title">Pobeda!</div>
+    <div class="result-sub">Prolaziš u sledeću rundu!</div>
+  </div>
+  
+  <!-- You Lost Match Screen -->
+  <div class="screen result-screen red" id="lostMatchScreen">
+    <div class="big-icon">😔</div>
+    <div class="result-title">Poraz</div>
+    <div class="result-sub" id="lostMatchSub">Hvala na učešću!</div>
+  </div>
+  
+  <!-- Eliminated Screen -->
+  <div class="screen result-screen red" id="eliminatedScreen">
+    <div class="big-icon">👋</div>
+    <div class="result-title">Eliminisan</div>
+    <div class="result-sub">Hvala na učešću!</div>
+  </div>
+  
+  <!-- Champion Screen -->
+  <div class="screen result-screen gold" id="championScreen">
+    <div class="big-icon">🏆</div>
+    <div class="result-title">POBEDNIK!</div>
+    <div class="result-sub">Čestitamo, osvojili ste turnir!</div>
+  </div>
+  
+  <!-- Correct, Next Round (Final) -->
+  <div class="screen result-screen green" id="correctNextScreen">
+    <div class="big-icon">✅</div>
+    <div class="result-title">Tačno!</div>
+    <div class="score-display" id="correctScore">0 : 0</div>
+    <div class="result-sub">Sledeća runda...</div>
+  </div>
+  
+  <!-- Opponent Correct, Next Round (Final) -->
+  <div class="screen result-screen red" id="opponentCorrectScreen">
+    <div class="big-icon">😞</div>
+    <div class="result-title">Protivnik pogodio</div>
+    <div class="score-display" id="opponentCorrectScore">0 : 0</div>
+    <div class="result-sub">Sledeća runda...</div>
+  </div>
+  
+  <!-- Kicked Screen -->
+  <div class="screen result-screen red" id="kickedScreen">
+    <div class="big-icon">🚫</div>
+    <div class="result-title">Izbačen</div>
+    <div class="result-sub">Izbačeni ste iz igre.</div>
+    <button class="btn btn-primary" style="margin-top: 30px;" onclick="location.reload()">Ponovo se pridruži</button>
+  </div>
+
+  <script>
+    let ws;
+    let myTeamName = '';
+    let heartbeatInterval;
+    
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const screen = document.getElementById(screenId);
+      if (screen) screen.classList.add('active');
+    }
+    
+    function connect() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+      
+      ws.onopen = () => {
+        if (myTeamName) {
+          ws.send(JSON.stringify({ type: 'team-join', name: myTeamName }));
+        }
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 15000);
+      };
+      
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleMessage(data);
+      };
+      
+      ws.onclose = () => {
+        clearInterval(heartbeatInterval);
+        setTimeout(connect, 1000);
+      };
+      
+      ws.onerror = () => ws.close();
+    }
+    
+    function handleMessage(data) {
+      switch (data.type) {
+        case 'joined':
+          myTeamName = data.name;
+          showScreen('waitingScreen');
+          document.getElementById('teamDisplay').textContent = myTeamName;
+          break;
+          
+        case 'error':
+          document.getElementById('error').textContent = data.message;
+          break;
+          
+        case 'tournament-state':
+          handleTournamentState(data);
+          break;
+          
+        case 'show-button':
+          showScreen('buttonScreen');
+          if (navigator.vibrate) navigator.vibrate(200);
+          break;
+          
+        case 'you-answer':
+          showScreen('answeringScreen');
+          break;
+          
+        case 'opponent-answers':
+          document.getElementById('opponentName').textContent = data.opponent + ' odgovara';
+          showScreen('opponentAnsweringScreen');
+          break;
+          
+        case 'your-turn-answer':
+          showScreen('yourTurnScreen');
+          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+          break;
+          
+        case 'you-wrong-wait':
+          showScreen('wrongWaitScreen');
+          break;
+          
+        case 'both-wrong-new-song':
+          showScreen('bothWrongScreen');
+          setTimeout(() => showScreen('waitingScreen'), 2000);
+          break;
+          
+        case 'you-won-match':
+          showScreen('wonMatchScreen');
+          if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+          setTimeout(() => showScreen('waitingScreen'), 3000);
+          break;
+          
+        case 'you-lost-match':
+          document.getElementById('lostMatchSub').textContent = 
+            data.isFinal ? `${data.winner} je pobednik turnira` : 'Hvala na učešću!';
+          showScreen('lostMatchScreen');
+          setTimeout(() => showScreen('eliminatedScreen'), 3000);
+          break;
+          
+        case 'you-won-tournament':
+          showScreen('championScreen');
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
+          break;
+          
+        case 'correct-next-round':
+          document.getElementById('correctScore').textContent = `${data.score1} : ${data.score2}`;
+          showScreen('correctNextScreen');
+          setTimeout(() => showScreen('waitingScreen'), 2500);
+          break;
+          
+        case 'opponent-correct-next-round':
+          document.getElementById('opponentCorrectScore').textContent = `${data.score1} : ${data.score2}`;
+          showScreen('opponentCorrectScreen');
+          setTimeout(() => showScreen('waitingScreen'), 2500);
+          break;
+          
+        case 'kicked':
+          showScreen('kickedScreen');
+          break;
+      }
+    }
+    
+    function handleTournamentState(data) {
+      const t = data.tournament;
+      
+      if (!t.started) {
+        document.getElementById('waitingStatus').textContent = 'Čekanje da turnir počne...';
+        return;
+      }
+      
+      // Check if eliminated
+      if (isEliminated(t)) {
+        showScreen('eliminatedScreen');
+        return;
+      }
+      
+      // Check if champion
+      if (t.bracket.final.winner === myTeamName) {
+        showScreen('championScreen');
+        return;
+      }
+      
+      // Find current status
+      const myMatch = findMyCurrentMatch(t);
+      
+      if (myMatch) {
+        const opponent = myMatch.team1 === myTeamName ? myMatch.team2 : myMatch.team1;
+        if (myMatch.active) {
+          document.getElementById('waitingStatus').textContent = `Meč protiv: ${opponent}`;
+        } else {
+          document.getElementById('waitingStatus').textContent = `Sledeći meč: ${opponent}`;
+        }
+      } else {
+        document.getElementById('waitingStatus').textContent = 'Čekanje sledećeg meča...';
+      }
+    }
+    
+    function findMyCurrentMatch(t) {
+      for (const match of t.bracket.quarterfinals) {
+        if ((match.team1 === myTeamName || match.team2 === myTeamName) && !match.winner) {
+          return match;
+        }
+      }
+      for (const match of t.bracket.semifinals) {
+        if ((match.team1 === myTeamName || match.team2 === myTeamName) && !match.winner) {
+          return match;
+        }
+      }
+      const f = t.bracket.final;
+      if ((f.team1 === myTeamName || f.team2 === myTeamName) && !f.winner) {
+        return f;
+      }
+      return null;
+    }
+    
+    function isEliminated(t) {
+      for (const match of t.bracket.quarterfinals) {
+        if ((match.team1 === myTeamName || match.team2 === myTeamName) && match.winner && match.winner !== myTeamName) {
+          return true;
+        }
+      }
+      for (const match of t.bracket.semifinals) {
+        if ((match.team1 === myTeamName || match.team2 === myTeamName) && match.winner && match.winner !== myTeamName) {
+          return true;
+        }
+      }
+      const f = t.bracket.final;
+      if ((f.team1 === myTeamName || f.team2 === myTeamName) && f.winner && f.winner !== myTeamName) {
+        return true;
+      }
+      return false;
+    }
+    
+    function joinGame() {
+      const name = document.getElementById('teamName').value.trim();
+      if (!name) {
+        document.getElementById('error').textContent = 'Molimo unesite ime tima';
+        return;
+      }
+      ws.send(JSON.stringify({ type: 'team-join', name }));
+    }
+    
+    function pressButton() {
+      ws.send(JSON.stringify({ type: 'buzz' }));
+      if (navigator.vibrate) navigator.vibrate(50);
+    }
+    
+    document.getElementById('teamName').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') joinGame();
+    });
+    
+    // Prevent double-tap zoom
+    document.addEventListener('touchstart', (e) => {
+      if (e.target.id === 'bigButton') {
+        e.preventDefault();
+        pressButton();
+      }
+    }, { passive: false });
+    
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        if (!ws || ws.readyState !== WebSocket.OPEN) connect();
+      }
+    });
+    
+    window.addEventListener('focus', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) connect();
+    });
+    
+    connect();
+  </script>
+</body>
+</html>
